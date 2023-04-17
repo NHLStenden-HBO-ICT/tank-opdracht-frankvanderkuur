@@ -13,8 +13,11 @@ constexpr auto health_bar_width = 70;
 
 constexpr auto max_frames = 2000;
 
+//TODO minimaal 3 optimalisaties mbv een algoritme
+
+
 //Global performance timer
-constexpr auto REF_PERFORMANCE = 114757; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
+constexpr auto REF_PERFORMANCE = 100835; //UPDATE THIS WITH YOUR REFERENCE PERFORMANCE (see console after 2k frames)
 static timer perf_timer;
 static float duration;
 
@@ -22,6 +25,7 @@ static float duration;
 static Surface* tank_red_img = new Surface("assets/Tank_Proj2.png");
 static Surface* tank_blue_img = new Surface("assets/Tank_Blue_Proj2.png");
 static Surface* rocket_red_img = new Surface("assets/Rocket_Proj2.png");
+
 static Surface* rocket_blue_img = new Surface("assets/Rocket_Blue_Proj2.png");
 static Surface* particle_beam_img = new Surface("assets/Particle_Beam.png");
 static Surface* smoke_img = new Surface("assets/Smoke.png");
@@ -46,6 +50,8 @@ const static float rocket_radius = 5.f;
 // This function does not count for the performance multiplier
 // (Feel free to optimize anyway though ;) )
 // -----------------------------------------------------------
+
+//TODO: Je kunt pointers in een array zetten, dan is handig om een array van tanks te maken.
 void Game::init()
 {
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
@@ -62,6 +68,7 @@ void Game::init()
 
     float spacing = 7.5f;
 
+    //TODO: Spawnen van tanks kan ook wel in een nette functie (DRY) 
     //Spawn blue tanks
     for (int i = 0; i < num_tanks_blue; i++)
     {
@@ -75,6 +82,7 @@ void Game::init()
         tanks.push_back(Tank(position.x, position.y, RED, &tank_red, &smoke, 100.f, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
     }
 
+    //TODO: Dit kan ook wel in een eigen functie
     particle_beams.push_back(Particle_beam(vec2(590, 327), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(64, 64), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(1200, 600), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
@@ -95,8 +103,10 @@ Tank& Game::find_closest_enemy(Tank& current_tank)
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
+    //TODO: kunnen we hier iets met een gridsort? Iets met een nearest neighbor zou hier helpen
     for (int i = 0; i < tanks.size(); i++)
     {
+        //TODO: waarom loopen we ook door alle niet vijandelijke tanks heen? Lijst opsplitsen?? Smart pointers??
         if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
         {
             float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
@@ -124,10 +134,13 @@ bool Tmpl8::Game::left_of_line(vec2 line_start, vec2 line_end, vec2 point)
 // Collision detection
 // Targeting etc..
 // -----------------------------------------------------------
+
+//TODO: Wellicht iets van een game-controller class maken? 
 void Game::update(float deltaTime)
 {
     //Calculate the route to the destination for each tank using BFS
     //Initializing routes here so it gets counted for performance..
+    //TODO DFS met een max diepte van N + 1 --> A*
     if (frame_count == 0)
     {
         for (Tank& t : tanks)
@@ -141,9 +154,10 @@ void Game::update(float deltaTime)
     {
         if (tank.active)
         {
+         //TODO: kunnen we hier iets met een gridsort? alleen tanks in zelfde of aansluitende grids?
             for (Tank& other_tank : tanks)
             {
-                if (&tank == &other_tank || !other_tank.active) continue;
+                if (&tank == &other_tank || !other_tank.active) continue; //Vraag: ik kan dus over kapotte tanks heen rijden??
 
                 vec2 dir = tank.get_position() - other_tank.get_position();
                 float dir_squared_len = dir.sqr_length();
@@ -162,6 +176,7 @@ void Game::update(float deltaTime)
     //Update tanks
     for (Tank& tank : tanks)
     {
+        //TODO: verplaatsen naar tank class??
         if (tank.active)
         {
             //Move tanks according to speed and nudges (see above) also reload
@@ -189,6 +204,7 @@ void Game::update(float deltaTime)
     forcefield_hull.clear();
 
     //Find first active tank (this loop is a bit disgusting, fix?)
+    //Vraag: Waar is dit goed voor?
     int first_active = 0;
     for (Tank& tank : tanks)
     {
@@ -212,6 +228,8 @@ void Game::update(float deltaTime)
     }
 
     //Calculate convex hull for 'rocket barrier'
+    //Vraag: Wat is de rocker barrier? Die cirkel om de tanks heen
+    //Confex hull optimalisatie
     for (Tank& tank : tanks)
     {
         if (tank.active)
@@ -244,6 +262,7 @@ void Game::update(float deltaTime)
         rocket.tick();
 
         //Check if rocket collides with enemy tank, spawn explosion, and if tank is destroyed spawn a smoke plume
+        //Gridsort
         for (Tank& tank : tanks)
         {
             if (tank.active && (tank.allignment != rocket.allignment) && rocket.intersects(tank.position, tank.collision_radius))
@@ -377,6 +396,8 @@ void Game::draw()
 // -----------------------------------------------------------
 // Sort tanks by health value using insertion sort
 // -----------------------------------------------------------
+//TODO: Mergesort beter?
+
 void Tmpl8::Game::insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end)
 {
     const int NUM_TANKS = end - begin;

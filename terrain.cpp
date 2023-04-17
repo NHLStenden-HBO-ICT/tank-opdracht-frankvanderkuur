@@ -129,6 +129,7 @@ namespace Tmpl8
     }
 
     //Use Breadth-first search to find shortest route to the destination
+    //TODO kunnen we hier iets met een ander algoritme? --> A*
     vector<vec2> Terrain::get_route(const Tank& tank, const vec2& target)
     {
         //Find start and target tile
@@ -138,6 +139,7 @@ namespace Tmpl8
         const size_t target_x = target.x / sprite_size;
         const size_t target_y = target.y / sprite_size;
 
+        //TODO Python voorbeeld van week 3 erbij pakken
         //Init queue with start tile
         std::queue<vector<TerrainTile*>> queue;
         queue.emplace();
@@ -154,7 +156,7 @@ namespace Tmpl8
             TerrainTile* current_tile = current_route.back();
 
             //Check all exits, if target then done, else if unvisited push a new partial route
-            for (TerrainTile * exit : current_tile->exits)
+            for (TerrainTile * exit : current_tile->exits) //TODO Alleen forward exits????
             {
                 if (exit->position_x == target_x && exit->position_y == target_y)
                 {
