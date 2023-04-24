@@ -45,6 +45,8 @@ const static vec2 rocket_size(6, 6);
 const static float tank_radius = 3.f;
 const static float rocket_radius = 5.f;
 
+const static uint max_rows = 24;
+
 // -----------------------------------------------------------
 // Initialize the simulation state
 // This function does not count for the performance multiplier
@@ -57,8 +59,8 @@ void Game::init()
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
     tanks.reserve(num_tanks_blue + num_tanks_red);
+    blue_tanks.reserve(num_tanks_blue);
 
-    uint max_rows = 24;
 
     float start_blue_x = tank_size.x + 40.0f;
     float start_blue_y = tank_size.y + 30.0f;
@@ -68,24 +70,23 @@ void Game::init()
 
     float spacing = 7.5f;
 
-    //TODO: Spawnen van tanks kan ook wel in een nette functie (DRY) 
-    //Spawn blue tanks
-    for (int i = 0; i < num_tanks_blue; i++)
-    {
-        vec2 position{ start_blue_x + ((i % max_rows) * spacing), start_blue_y + ((i / max_rows) * spacing) };
-        tanks.push_back(Tank(position.x, position.y, BLUE, &tank_blue, &smoke, 1100.f, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
-    }
-    //Spawn red tanks
-    for (int i = 0; i < num_tanks_red; i++)
-    {
-        vec2 position{ start_red_x + ((i % max_rows) * spacing), start_red_y + ((i / max_rows) * spacing) };
-        tanks.push_back(Tank(position.x, position.y, RED, &tank_red, &smoke, 100.f, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
-    }
+    //Spawn tanks
+    create_tanks(start_blue_x, start_blue_y, 1100.f, BLUE, spacing, num_tanks_blue);
+    create_tanks(start_red_x, start_red_y, 100.f, RED, spacing, num_tanks_red);
 
     //TODO: Dit kan ook wel in een eigen functie
     particle_beams.push_back(Particle_beam(vec2(590, 327), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(64, 64), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
     particle_beams.push_back(Particle_beam(vec2(1200, 600), vec2(100, 50), &particle_beam_sprite, particle_beam_hit_value));
+}
+
+//Creates the tanks for a faction
+void Game::create_tanks(float start_x, float start_y, float target_x, allignments allignment, float spacing, int amount) {
+    for (int i = 0; i < amount; i++)
+    {
+        vec2 position{ start_x + ((i % max_rows) * spacing), start_y + ((i / max_rows) * spacing) };
+        tanks.push_back(Tank(position.x, position.y, allignment, (allignment == RED) ? &tank_red : &tank_blue, &smoke, target_x, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
+    }
 }
 
 // -----------------------------------------------------------

@@ -20,6 +20,7 @@ class Game
     void insertion_sort_tanks_health(const std::vector<Tank>& original, std::vector<const Tank*>& sorted_tanks, int begin, int end);
     void draw_health_bars(const std::vector<const Tank*>& sorted_tanks, const int team);
     void measure_performance();
+    void create_tanks(float start_x, float start_y, float target_x, allignments alignment, float spacing, int amount);
 
     Tank& find_closest_enemy(Tank& current_tank);
 
@@ -47,6 +48,8 @@ class Game
     Surface* screen;
 
     vector<Tank> tanks;
+    vector<shared_ptr<Tank>> blue_tanks; //Added unique pointers with alignment tanks. Unique pointer takes precedence above auto pointers (https://www.learncpp.com/cpp-tutorial/introduction-to-smart-pointers-move-semantics/)
+    shared_ptr <vector<Tank>> red_tanks;
     vector<Rocket> rockets;
     vector<Smoke> smokes;
     vector<Explosion> explosions;
