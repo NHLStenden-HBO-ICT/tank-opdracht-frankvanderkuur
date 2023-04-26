@@ -85,7 +85,14 @@ void Game::create_tanks(float start_x, float start_y, float target_x, allignment
     for (int i = 0; i < amount; i++)
     {
         vec2 position{ start_x + ((i % max_rows) * spacing), start_y + ((i / max_rows) * spacing) };
-        tanks.push_back(Tank(position.x, position.y, allignment, (allignment == RED) ? &tank_red : &tank_blue, &smoke, target_x, position.y + 16, tank_radius, tank_max_health, tank_max_speed));
+        Tank* newTank = new Tank(position.x, position.y, allignment, (allignment == RED) ? &tank_red : &tank_blue, &smoke, target_x, position.y + 16, tank_radius, tank_max_health, tank_max_speed);
+        tanks.push_back(*newTank);
+        if (allignment == RED) {
+            red_tanks.push_back(newTank);
+        }
+        else {
+            blue_tanks.push_back(newTank);
+        }
     }
 }
 
@@ -99,18 +106,18 @@ void Game::shutdown()
 // -----------------------------------------------------------
 // Iterates through all tanks and returns the closest enemy tank for the given tank
 // -----------------------------------------------------------
-Tank& Game::find_closest_enemy(Tank& current_tank)
+Tank& Game::find_closest_enemy(Tank& current_tank, vector<Tank*>& enemyTanks)
 {
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
-
-    //TODO: kunnen we hier iets met een gridsort? Iets met een nearest neighbor zou hier helpen
-    for (int i = 0; i < tanks.size(); i++)
+   
+    //TODO: kunnen we hier iets met een gridsort / KD tree? Iets met een nearest neighbor zou hier helpen
+    for (int i = 0; i < enemyTanks.size(); i++)
     {
         //TODO: waarom loopen we ook door alle niet vijandelijke tanks heen? Lijst opsplitsen?? Smart pointers??
-        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
+        if (enemyTanks.at(i)->active)
         {
-            float sqr_dist = fabsf((tanks.at(i).get_position() - current_tank.get_position()).sqr_length());
+            float sqr_dist = fabsf((enemyTanks.at(i)->get_position() - current_tank.get_position()).sqr_length());
             if (sqr_dist < closest_distance)
             {
                 closest_distance = sqr_dist;
@@ -119,7 +126,7 @@ Tank& Game::find_closest_enemy(Tank& current_tank)
         }
     }
 
-    return tanks.at(closest_index);
+    return *enemyTanks.at(closest_index);
 }
 
 //Checks if a point lies on the left of an arbitrary angled line
@@ -186,7 +193,7 @@ void Game::update(float deltaTime)
             //Shoot at closest target if reloaded
             if (tank.rocket_reloaded())
             {
-                Tank& target = find_closest_enemy(tank);
+                Tank& target = find_closest_enemy(tank, (tank.allignment == RED) ? blue_tanks : red_tanks);
 
                 rockets.push_back(Rocket(tank.position, (target.get_position() - tank.position).normalized() * 3, rocket_radius, tank.allignment, ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
 
